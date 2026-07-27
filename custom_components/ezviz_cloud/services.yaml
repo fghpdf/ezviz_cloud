@@ -1,0 +1,16 @@
+generate_daily_recap:
+  name: 生成并发送每日安全回顾
+  description: 汇总全天的摄像头告警事件、事件统计与重点截图，发送每日总结报告至指定的 Home Assistant 通知渠道。
+  fields:
+    target_notify_service:
+      name: 通知目标服务
+      description: 调用的 HA 通知服务名称，例如 notify.telegram、notify.mobile_app_iphone 或 notify.bark
+      required: false
+      example: notify.telegram
+      default: notify
+    title:
+      name: 消息标题
+      description: 每日总结消息标题
+      required: false
+      example: 📹 萤石摄像头每日安全回顾
+      default: 📹 萤石摄像头每日回顾与概览

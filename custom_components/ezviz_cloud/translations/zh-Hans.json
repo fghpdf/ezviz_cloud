@@ -1,0 +1,35 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "配置萤石云 (Ezviz Cloud)",
+        "description": "请输入您在萤石开放平台 (open.ys7.com) 申请的 AppKey 和 AppSecret。",
+        "data": {
+          "app_key": "AppKey",
+          "app_secret": "AppSecret",
+          "verification_code": "设备验证码/解密密钥（可选）",
+          "scan_interval": "告警轮询间隔（秒，默认10）"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "无法连接到萤石云开放平台",
+      "invalid_auth": "AppKey 或 AppSecret 验证失败",
+      "unknown": "发生未知错误"
+    },
+    "abort": {
+      "already_configured": "该 AppKey 已经配置过了"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "选项配置",
+        "data": {
+          "scan_interval": "告警轮询间隔（秒）",
+          "verification_code": "设备验证码/解密密钥"
+        }
+      }
+    }
+  }
+}

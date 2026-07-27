@@ -1,0 +1,35 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure Ezviz Cloud",
+        "description": "Please enter your AppKey and AppSecret obtained from Ezviz Open Platform (open.ys7.com).",
+        "data": {
+          "app_key": "AppKey",
+          "app_secret": "AppSecret",
+          "verification_code": "Device Verification Code (Optional)",
+          "scan_interval": "Alarm Polling Interval (seconds, default 10)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to Ezviz Open Platform",
+      "invalid_auth": "Invalid AppKey or AppSecret",
+      "unknown": "Unexpected error occurred"
+    },
+    "abort": {
+      "already_configured": "This AppKey is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ezviz Cloud Options",
+        "data": {
+          "scan_interval": "Alarm Polling Interval (seconds)",
+          "verification_code": "Device Verification Code"
+        }
+      }
+    }
+  }
+}
