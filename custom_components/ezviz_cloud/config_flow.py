@@ -40,7 +40,6 @@ class EzvizCloudConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             verification_code = user_input.get(CONF_VERIFICATION_CODE, "").strip() or None
             scan_interval = user_input.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
 
-            # 避免重复添加同一个 AppKey
             await self.async_set_unique_id(app_key)
             self._abort_if_unique_id_configured()
 
@@ -66,9 +65,11 @@ class EzvizCloudConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     )
                 else:
                     errors["base"] = "invalid_auth"
-            except EzvizAuthError:
+            except EzvizAuthError as err:
+                _LOGGER.error("Ezviz Authentication failed: %s", err)
                 errors["base"] = "invalid_auth"
-            except EzvizAPIError:
+            except EzvizAPIError as err:
+                _LOGGER.error("Ezviz API connection failed: %s", err)
                 errors["base"] = "cannot_connect"
             except Exception as err:
                 _LOGGER.exception("Unexpected error in config flow: %s", err)

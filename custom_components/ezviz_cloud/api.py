@@ -60,12 +60,25 @@ class EzvizAPIClient:
             "appSecret": self.app_secret,
         }
 
-        try:
-            async with self._session.post(TOKEN_URL, data=data, timeout=15) as resp:
-                result = await resp.json()
-                _LOGGER.debug("Ezviz get_token response: %s", result)
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded",
+        }
 
-                code = str(result.get("code"))
+        try:
+            _LOGGER.debug("Requesting Ezviz Token for AppKey: %s", self.app_key)
+            async with self._session.post(TOKEN_URL, data=data, headers=headers, timeout=15) as resp:
+                try:
+                    result = await resp.json()
+                except Exception:
+                    text = await resp.text()
+                    _LOGGER.error("Ezviz non-JSON response (HTTP %s): %s", resp.status, text)
+                    raise EzvizAPIError(f"HTTP {resp.status}: 接口响应格式异常")
+
+                _LOGGER.info("Ezviz get_token response: %s", result)
+
+                code = str(result.get("code", ""))
+                msg = result.get("msg", "未知错误")
+
                 if code == "200" and "data" in result:
                     token_data = result["data"]
                     self._access_token = token_data.get("accessToken")
@@ -73,16 +86,18 @@ class EzvizAPIClient:
                     if expire_ms:
                         self._token_expire_time = datetime.fromtimestamp(expire_ms / 1000.0)
                     else:
-                        # 默认缓存 6 天
                         self._token_expire_time = now + timedelta(days=6)
                     _LOGGER.info("Ezviz AccessToken updated successfully.")
                     return self._access_token
-                elif code in ("10001", "10002"):
-                    raise EzvizAuthError(f"Invalid appKey or appSecret: {result.get('msg')}")
+                elif code in ("10001", "10002", "10005", "10014"):
+                    _LOGGER.error("Ezviz Auth error (%s): %s", code, msg)
+                    raise EzvizAuthError(f"鉴权错误 ({code}): {msg}")
                 else:
-                    raise EzvizAPIError(f"Failed to get AccessToken: {result.get('msg')} (code: {code})")
+                    _LOGGER.error("Ezviz API error (%s): %s", code, msg)
+                    raise EzvizAPIError(f"接口错误 ({code}): {msg}")
         except aiohttp.ClientError as err:
-            raise EzvizAPIError(f"Network error when requesting token: {err}") from err
+            _LOGGER.error("Network error when requesting Ezviz token: %s", err)
+            raise EzvizAPIError(f"网络连接异常: {err}") from err
 
     async def validate_credentials(self) -> bool:
         """Validate credentials by requesting token."""
@@ -104,8 +119,7 @@ class EzvizAPIClient:
                 code = str(result.get("code"))
                 if code == "200":
                     return result.get("data", [])
-                elif code == "10002":
-                    # Token 过期重试
+                elif code in ("10002", "10003"):
                     token = await self.get_access_token(force_refresh=True)
                     data["accessToken"] = token
                     async with self._session.post(DEVICE_LIST_URL, data=data, timeout=15) as retry_resp:
@@ -175,7 +189,7 @@ class EzvizAPIClient:
                 code = str(result.get("code"))
                 if code == "200":
                     return result.get("data", [])
-                elif code == "10002":
+                elif code in ("10002", "10003"):
                     token = await self.get_access_token(force_refresh=True)
                     data["accessToken"] = token
                     async with self._session.post(ALARM_LIST_URL, data=data, timeout=15) as retry_resp:
