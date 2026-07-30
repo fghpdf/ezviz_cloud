@@ -1,9 +1,10 @@
 {
   "domain": "ezviz_cloud",
   "name": "萤石云 (Ezviz Cloud)",
-  "documentation": "https://github.com/custom-components/ezviz_cloud",
+  "documentation": "https://github.com/fghpdf/ezviz_cloud",
+  "issue_tracker": "https://github.com/fghpdf/ezviz_cloud/issues",
   "dependencies": [],
-  "codeowners": ["@user"],
+  "codeowners": ["@fghpdf"],
   "config_flow": true,
   "iot_class": "cloud_polling",
   "version": "1.0.0"
