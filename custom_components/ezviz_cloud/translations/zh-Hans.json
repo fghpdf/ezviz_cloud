@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "配置萤石云 (Ezviz Cloud)",
-        "description": "请输入您在萤石开放平台 (open.ys7.com) 申请的 AppKey 和 AppSecret。",
+        "description": "请输入您在萤石开放平台 (open.ys7.com) 申请的 AppKey 和 AppSecret。\n\n{error_detail}",
         "data": {
           "app_key": "AppKey",
           "app_secret": "AppSecret",
@@ -13,9 +13,9 @@
       }
     },
     "error": {
-      "cannot_connect": "无法连接到萤石云开放平台",
-      "invalid_auth": "AppKey 或 AppSecret 验证失败",
-      "unknown": "发生未知错误"
+      "cannot_connect": "无法连接到萤石云开放平台 ({error_detail})",
+      "invalid_auth": "AppKey 或 AppSecret 验证失败 ({error_detail})",
+      "unknown": "发生未知错误 ({error_detail})"
     },
     "abort": {
       "already_configured": "该 AppKey 已经配置过了"

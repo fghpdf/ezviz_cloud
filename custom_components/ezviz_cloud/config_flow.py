@@ -33,6 +33,7 @@ class EzvizCloudConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> config_entries.FlowResult:
         """Handle the initial user setup step."""
         errors: Dict[str, str] = {}
+        error_detail: str = ""
 
         if user_input is not None:
             app_key = user_input[CONF_APP_KEY].strip()
@@ -65,15 +66,19 @@ class EzvizCloudConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     )
                 else:
                     errors["base"] = "invalid_auth"
+                    error_detail = "凭据无法签发 Token"
             except EzvizAuthError as err:
                 _LOGGER.error("Ezviz Authentication failed: %s", err)
                 errors["base"] = "invalid_auth"
+                error_detail = str(err)
             except EzvizAPIError as err:
                 _LOGGER.error("Ezviz API connection failed: %s", err)
                 errors["base"] = "cannot_connect"
+                error_detail = str(err)
             except Exception as err:
                 _LOGGER.exception("Unexpected error in config flow: %s", err)
                 errors["base"] = "unknown"
+                error_detail = str(err)
 
         schema = vol.Schema(
             {
@@ -90,6 +95,7 @@ class EzvizCloudConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=schema,
             errors=errors,
+            description_placeholders={"error_detail": error_detail},
         )
 
     @staticmethod
