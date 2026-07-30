@@ -12,9 +12,9 @@ DEFAULT_SCAN_INTERVAL = 10  # 默认 10 秒轮询一次报警列表
 
 EVENT_EZVIZ_ALARM = "ezviz_cloud_alarm"
 
-# API Endpoints
+# API Endpoints (ys7.com 官方开放平台标准 Endpoint)
 BASE_URL = "https://open.ys7.com/api/lcn"
-TOKEN_URL = f"{BASE_URL}/token/get"
+TOKEN_URL = f"{BASE_URL}/oauth/token"
 DEVICE_LIST_URL = f"{BASE_URL}/device/list"
 CAPTURE_URL = f"{BASE_URL}/device/capture"
 ALARM_LIST_URL = f"{BASE_URL}/device/alarm/list"
