@@ -5,6 +5,7 @@ import asyncio
 from datetime import datetime, timedelta
 import logging
 import os
+import re
 from typing import Any, Dict, List, Optional
 import aiohttp
 
@@ -15,6 +16,7 @@ from .const import (
     TOKEN_URL,
     BASE_URL,
 )
+from .decrypt import decrypt_ezviz_image_bytes
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -49,6 +51,30 @@ class EzvizAPIClient:
         self.verification_code = verification_code
         self._access_token: Optional[str] = None
         self._token_expire_time: Optional[datetime] = None
+
+    def get_candidate_verification_codes(self, device_serial: Optional[str] = None) -> List[str]:
+        """Parse multiple verification codes or device-specific mapping."""
+        if not self.verification_code:
+            return []
+
+        raw_str = self.verification_code.strip()
+        codes: List[str] = []
+
+        # 检查是否有键值对映射，形如 BC9174122:ABCDEF, BC9266870:XYZ123
+        if ":" in raw_str and device_serial:
+            for item in re.split(r"[,;\s]+", raw_str):
+                if ":" in item:
+                    serial, code = item.split(":", 1)
+                    if serial.strip() == device_serial:
+                        codes.append(code.strip())
+
+        # 将按逗号/分号/空格分割的所有候选码也列入
+        for token in re.split(r"[,;\s]+", raw_str):
+            cleaned = token.strip()
+            if cleaned and ":" not in cleaned and cleaned not in codes:
+                codes.append(cleaned)
+
+        return codes
 
     async def get_access_token(self, force_refresh: bool = False) -> str:
         """Get or refresh valid AccessToken from open.ys7.com."""
@@ -211,8 +237,9 @@ class EzvizAPIClient:
         pic_url: str,
         save_dir: str,
         filename: str,
+        device_serial: Optional[str] = None,
     ) -> Optional[str]:
-        """Download alarm picture to local directory (e.g. /config/www/ezviz_alarms/)."""
+        """Download alarm picture to local directory (and auto-decrypt if encrypted)."""
         if not pic_url:
             return None
 
@@ -223,6 +250,12 @@ class EzvizAPIClient:
             async with self._session.get(pic_url, headers=DEFAULT_HEADERS, timeout=20) as resp:
                 if resp.status == 200:
                     content = await resp.read()
+
+                    # 尝试自动解密！
+                    candidate_codes = self.get_candidate_verification_codes(device_serial)
+                    if candidate_codes:
+                        content = decrypt_ezviz_image_bytes(content, candidate_codes)
+
                     loop = asyncio.get_event_loop()
                     await loop.run_in_executor(None, self._write_file, target_path, content)
                     _LOGGER.info("Saved alarm image to %s", target_path)

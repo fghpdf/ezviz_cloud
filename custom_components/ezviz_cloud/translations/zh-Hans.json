@@ -3,11 +3,11 @@
     "step": {
       "user": {
         "title": "配置萤石云 (Ezviz Cloud)",
-        "description": "请输入您在萤石开放平台 (open.ys7.com) 申请的 AppKey 和 AppSecret。",
+        "description": "请输入您在萤石开放平台 (open.ys7.com) 申请的 AppKey 和 AppSecret。\n\n若开启了视频/图片加密，可在下方填入设备验证码。多台设备支持用逗号分隔（如 CODEA,CODEB），或按序列号映射填入（如 BC9174122:CODEA, BC9266870:CODEB）。",
         "data": {
           "app_key": "AppKey",
           "app_secret": "AppSecret",
-          "verification_code": "设备验证码/解密密钥（可选）",
+          "verification_code": "设备验证码/解密密钥（多台用逗号分隔或 序列号:验证码）",
           "scan_interval": "告警轮询间隔（秒，默认10）"
         }
       }
@@ -27,7 +27,7 @@
         "title": "选项配置",
         "data": {
           "scan_interval": "告警轮询间隔（秒）",
-          "verification_code": "设备验证码/解密密钥"
+          "verification_code": "设备验证码/解密密钥（支持多台设备逗号分隔）"
         }
       }
     }

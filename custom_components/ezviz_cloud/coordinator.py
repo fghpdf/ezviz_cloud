@@ -95,11 +95,13 @@ class EzvizDataUpdateCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
                 local_image_path = None
                 relative_image_path = None
 
-                # 保存告警截图到 HA 的 www 目录中
+                # 保存并自动解密告警截图到 HA 的 www 目录中
                 if pic_url:
                     save_dir = self.hass.config.path("www", "ezviz_alarms")
                     filename = f"{file_time_str}_{device_serial}.jpg"
-                    local_image_path = await self.api.download_alarm_image(pic_url, save_dir, filename)
+                    local_image_path = await self.api.download_alarm_image(
+                        pic_url, save_dir, filename, device_serial=device_serial
+                    )
                     if local_image_path:
                         relative_image_path = f"/local/ezviz_alarms/{filename}"
 
