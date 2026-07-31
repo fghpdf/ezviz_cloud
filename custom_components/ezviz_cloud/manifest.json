@@ -3,9 +3,10 @@
   "name": "萤石云 (Ezviz Cloud)",
   "documentation": "https://github.com/fghpdf/ezviz_cloud",
   "issue_tracker": "https://github.com/fghpdf/ezviz_cloud/issues",
-  "dependencies": ["cryptography"],
+  "dependencies": [],
+  "requirements": ["cryptography"],
   "codeowners": ["@fghpdf"],
   "config_flow": true,
   "iot_class": "cloud_polling",
-  "version": "1.0.7"
+  "version": "1.0.8"
 }
