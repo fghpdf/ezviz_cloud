@@ -13,6 +13,7 @@ from .const import (
     CAPTURE_URL,
     DEVICE_LIST_URL,
     TOKEN_URL,
+    BASE_URL,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -180,28 +181,30 @@ class EzvizAPIClient:
             data["deviceSerial"] = device_serial
 
         if start_time:
-            data["startTime"] = start_time.strftime("%Y-%m-%d %H:%M:%S")
+            data["startTime"] = int(start_time.timestamp() * 1000)
         if end_time:
-            data["endTime"] = end_time.strftime("%Y-%m-%d %H:%M:%S")
+            data["endTime"] = int(end_time.timestamp() * 1000)
 
-        try:
-            async with self._session.post(ALARM_LIST_URL, data=data, headers=DEFAULT_HEADERS, timeout=15) as resp:
-                result = await resp.json()
-                code = str(result.get("code"))
-                if code == "200":
-                    return result.get("data", [])
-                elif code in ("10002", "10003"):
-                    token = await self.get_access_token(force_refresh=True)
-                    data["accessToken"] = token
-                    async with self._session.post(ALARM_LIST_URL, data=data, headers=DEFAULT_HEADERS, timeout=15) as retry_resp:
-                        retry_res = await retry_resp.json()
-                        return retry_res.get("data", [])
-                else:
-                    _LOGGER.warning("Fetch alarm list error: %s (code: %s)", result.get("msg"), code)
-                    return []
-        except aiohttp.ClientError as err:
-            _LOGGER.error("Network error fetching alarm list: %s", err)
-            return []
+        url_options = [ALARM_LIST_URL, f"{BASE_URL}/alarm/list"]
+
+        for target_url in url_options:
+            try:
+                async with self._session.post(target_url, data=data, headers=DEFAULT_HEADERS, timeout=15) as resp:
+                    result = await resp.json()
+                    code = str(result.get("code"))
+                    if code == "200":
+                        return result.get("data", [])
+                    elif code in ("10002", "10003"):
+                        token = await self.get_access_token(force_refresh=True)
+                        data["accessToken"] = token
+                        async with self._session.post(target_url, data=data, headers=DEFAULT_HEADERS, timeout=15) as retry_resp:
+                            retry_res = await retry_resp.json()
+                            return retry_res.get("data", [])
+            except aiohttp.ClientError as err:
+                _LOGGER.error("Network error fetching alarm list from %s: %s", target_url, err)
+                continue
+
+        return []
 
     async def download_alarm_image(
         self,
