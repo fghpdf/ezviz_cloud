@@ -43,7 +43,16 @@
 
 ## 🛠️ 安装方法
 
-### 方法一：通过 HACS 自动安装（推荐 ⭐️）
+If you don't have [HACS](https://hacs.xyz) installed yet, I highly recommend it.  
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=fghpdf&repository=ezviz_cloud&category=integration) or search for `萤石云 (Ezviz Cloud)`.
+
+### 方法一：通过 My Home Assistant 一键添加（最方便 ⭐️）
+
+点击下方按钮，会自动打开您的 Home Assistant 实例并直接跳转至 HACS 添加页面：
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=fghpdf&repository=ezviz_cloud&category=integration)
+
+### 方法二：在 HACS 中手动添加
 
 1. 打开 Home Assistant 的 **HACS** 界面。
 2. 点击右上角的三个点 ➔ 选择 **自定义存储库 (Custom repositories)**。
@@ -51,12 +60,6 @@
 4. 类别选择 **集成 (Integration)** ➔ 点击 **添加 (Add)**。
 5. 在 HACS 列表中找到 **萤石云 (Ezviz Cloud)** 并点击 **下载**。
 6. 重启 Home Assistant。
-
-### 方法二：手动安装
-
-1. 下载本仓库源码压缩包。
-2. 将 `custom_components/ezviz_cloud` 文件夹解压并拷贝至您 HA 配置目录下的 `custom_components/` 中（路径例：`/config/custom_components/ezviz_cloud`）。
-3. 重启 Home Assistant。
 
 ---
 
