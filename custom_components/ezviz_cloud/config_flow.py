@@ -98,15 +98,11 @@ class EzvizCloudConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         config_entry: config_entries.ConfigEntry,
     ) -> config_entries.OptionsFlow:
         """Get the options flow for this handler."""
-        return EzvizCloudOptionsFlowHandler(config_entry)
+        return EzvizCloudOptionsFlowHandler()
 
 
 class EzvizCloudOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options for Ezviz Cloud."""
-
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        """Initialize options flow."""
-        self.config_entry = config_entry
 
     async def async_step_init(
         self, user_input: Optional[Dict[str, Any]] = None
@@ -129,8 +125,8 @@ class EzvizCloudOptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Optional(CONF_SCAN_INTERVAL, default=current_interval): vol.All(
                     cv.positive_int, vol.Range(min=5, max=300)
                 ),
-                vol.Optional(CONF_VERIFICATION_CODE, default=current_vcode or ""): str,
+                vol.Optional(CONF_VERIFICATION_CODE, default=str(current_vcode or "")): str,
             }
         )
 
-        return self.show_form(step_id="init", data_schema=schema)
+        return self.async_show_form(step_id="init", data_schema=schema)
