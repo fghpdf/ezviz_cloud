@@ -43,16 +43,13 @@
 
 ## 🛠️ 安装方法
 
-If you don't have [HACS](https://hacs.xyz) installed yet, I highly recommend it.  
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=fghpdf&repository=ezviz_cloud&category=integration) or search for `萤石云 (Ezviz Cloud)`.
+如果您尚未安装 [HACS](https://hacs.xyz)，强烈推荐先进行安装。
 
-### 方法一：通过 My Home Assistant 一键添加（最方便 ⭐️）
-
-点击下方按钮，会自动打开您的 Home Assistant 实例并直接跳转至 HACS 添加页面：
+点击下方按钮可以直接在您的 Home Assistant 实例中打开并添加此集成仓库：
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=fghpdf&repository=ezviz_cloud&category=integration)
 
-### 方法二：在 HACS 中手动添加
+### 手动在 HACS 中添加
 
 1. 打开 Home Assistant 的 **HACS** 界面。
 2. 点击右上角的三个点 ➔ 选择 **自定义存储库 (Custom repositories)**。
