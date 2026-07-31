@@ -1,4 +1,6 @@
 {
   "name": "萤石云 (Ezviz Cloud)",
-  "render_readme": true
+  "render_readme": true,
+  "country": ["CN", "JP"],
+  "homeassistant": "2024.1.0"
 }
