@@ -50,8 +50,10 @@ class EzvizTodayAlarmCountSensor(CoordinatorEntity[EzvizDataUpdateCoordinator], 
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return full list of today's alarms for dashboard rendering."""
+        """Return latest 15 alarms for dashboard rendering without exceeding HA DB 16KB limit."""
+        recent_alarms = self.coordinator.today_alarms[-15:] if self.coordinator.today_alarms else []
         return {
-            "alarms": self.coordinator.today_alarms,
+            "recent_alarms": recent_alarms,
+            "today_total_count": len(self.coordinator.today_alarms),
             "device_count": len(self.coordinator.devices),
         }

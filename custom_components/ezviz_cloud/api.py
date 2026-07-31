@@ -61,7 +61,6 @@ class EzvizAPIClient:
         raw_str = self.verification_code.strip()
         codes: List[str] = []
 
-        # 检查是否有键值对映射，形如 BC9174122:ABCDEF, BC9266870:XYZ123
         if ":" in raw_str and device_serial:
             for item in re.split(r"[,;\s]+", raw_str):
                 if ":" in item:
@@ -69,7 +68,6 @@ class EzvizAPIClient:
                     if serial.strip() == device_serial:
                         codes.append(code.strip())
 
-        # 将按逗号/分号/空格分割的所有候选码也列入
         for token in re.split(r"[,;\s]+", raw_str):
             cleaned = token.strip()
             if cleaned and ":" not in cleaned and cleaned not in codes:
@@ -97,13 +95,13 @@ class EzvizAPIClient:
             _LOGGER.debug("Requesting Ezviz Token for AppKey: %s", self.app_key)
             async with self._session.post(TOKEN_URL, data=data, headers=DEFAULT_HEADERS, timeout=15) as resp:
                 try:
-                    result = await resp.json()
+                    result = await resp.json(content_type=None)
                 except Exception:
                     text = await resp.text()
                     _LOGGER.error("Ezviz non-JSON response (HTTP %s): %s", resp.status, text[:200])
                     raise EzvizAPIError(f"HTTP {resp.status} 响应异常")
 
-                _LOGGER.info("Ezviz get_token response: %s", result)
+                _LOGGER.debug("Ezviz get_token response: %s", result)
 
                 code = str(result.get("code", ""))
                 msg = result.get("msg", "未知错误")
@@ -124,7 +122,7 @@ class EzvizAPIClient:
                 else:
                     _LOGGER.error("Ezviz API error (%s): %s", code, msg)
                     raise EzvizAPIError(f"{msg} ({code})")
-        except aiohttp.ClientError as err:
+        except (aiohttp.ClientError, asyncio.TimeoutError) as err:
             _LOGGER.error("Network error when requesting Ezviz token: %s", err)
             raise EzvizAPIError(f"网络超时或无法连接: {err}") from err
 
@@ -135,16 +133,16 @@ class EzvizAPIClient:
 
     async def get_device_list(self, page_start: int = 0, page_size: int = 50) -> List[Dict[str, Any]]:
         """Fetch bound devices list."""
-        token = await self.get_access_token()
-        data = {
-            "accessToken": token,
-            "pageStart": page_start,
-            "pageSize": page_size,
-        }
-
         try:
+            token = await self.get_access_token()
+            data = {
+                "accessToken": token,
+                "pageStart": page_start,
+                "pageSize": page_size,
+            }
+
             async with self._session.post(DEVICE_LIST_URL, data=data, headers=DEFAULT_HEADERS, timeout=15) as resp:
-                result = await resp.json()
+                result = await resp.json(content_type=None)
                 code = str(result.get("code"))
                 if code == "200":
                     return result.get("data", [])
@@ -152,41 +150,42 @@ class EzvizAPIClient:
                     token = await self.get_access_token(force_refresh=True)
                     data["accessToken"] = token
                     async with self._session.post(DEVICE_LIST_URL, data=data, headers=DEFAULT_HEADERS, timeout=15) as retry_resp:
-                        retry_res = await retry_resp.json()
+                        retry_res = await retry_resp.json(content_type=None)
                         return retry_res.get("data", [])
                 else:
-                    _LOGGER.warning("Get device list failed: %s", result.get("msg"))
+                    _LOGGER.warning("Get device list failed: %s (code: %s)", result.get("msg"), code)
                     return []
-        except aiohttp.ClientError as err:
-            _LOGGER.error("Network error fetching device list: %s", err)
+        except (aiohttp.ClientError, asyncio.TimeoutError) as err:
+            _LOGGER.warning("Network timeout or connection error fetching device list: %s", err)
             return []
 
     async def capture_snapshot(self, device_serial: str, channel_no: int = 1) -> Optional[str]:
         """Request device snapshot capture and return image URL."""
-        token = await self.get_access_token()
-        data = {
-            "accessToken": token,
-            "deviceSerial": device_serial,
-            "channelNo": channel_no,
-        }
-
         try:
+            token = await self.get_access_token()
+            data = {
+                "accessToken": token,
+                "deviceSerial": device_serial,
+                "channelNo": channel_no,
+            }
+
             async with self._session.post(CAPTURE_URL, data=data, headers=DEFAULT_HEADERS, timeout=15) as resp:
-                result = await resp.json()
+                result = await resp.json(content_type=None)
                 code = str(result.get("code"))
                 if code == "200" and "data" in result:
                     pic_url = result["data"].get("picUrl")
                     return pic_url
                 else:
-                    _LOGGER.warning(
-                        "Capture snapshot failed for %s: %s (code: %s)",
+                    # 对于非 Camera 或无抓图通道设备 (如 20032 通道不存在)，优雅记为 Debug 日志
+                    _LOGGER.debug(
+                        "Capture snapshot not supported/failed for %s: %s (code: %s)",
                         device_serial,
                         result.get("msg"),
                         code,
                     )
                     return None
-        except aiohttp.ClientError as err:
-            _LOGGER.error("Network error capturing snapshot: %s", err)
+        except (aiohttp.ClientError, asyncio.TimeoutError) as err:
+            _LOGGER.debug("Network error capturing snapshot for %s: %s", device_serial, err)
             return None
 
     async def get_alarm_list(
@@ -198,38 +197,41 @@ class EzvizAPIClient:
         page_size: int = 30,
     ) -> List[Dict[str, Any]]:
         """Fetch alarm list for devices."""
-        token = await self.get_access_token()
-        data: Dict[str, Any] = {
-            "accessToken": token,
-            "pageStart": page_start,
-            "pageSize": page_size,
-        }
-        if device_serial:
-            data["deviceSerial"] = device_serial
+        try:
+            token = await self.get_access_token()
+            data: Dict[str, Any] = {
+                "accessToken": token,
+                "pageStart": page_start,
+                "pageSize": page_size,
+            }
+            if device_serial:
+                data["deviceSerial"] = device_serial
 
-        if start_time:
-            data["startTime"] = int(start_time.timestamp() * 1000)
-        if end_time:
-            data["endTime"] = int(end_time.timestamp() * 1000)
+            if start_time:
+                data["startTime"] = int(start_time.timestamp() * 1000)
+            if end_time:
+                data["endTime"] = int(end_time.timestamp() * 1000)
 
-        url_options = [ALARM_LIST_URL, f"{BASE_URL}/alarm/list"]
+            url_options = [ALARM_LIST_URL, f"{BASE_URL}/alarm/list"]
 
-        for target_url in url_options:
-            try:
-                async with self._session.post(target_url, data=data, headers=DEFAULT_HEADERS, timeout=15) as resp:
-                    result = await resp.json()
-                    code = str(result.get("code"))
-                    if code == "200":
-                        return result.get("data", [])
-                    elif code in ("10002", "10003"):
-                        token = await self.get_access_token(force_refresh=True)
-                        data["accessToken"] = token
-                        async with self._session.post(target_url, data=data, headers=DEFAULT_HEADERS, timeout=15) as retry_resp:
-                            retry_res = await retry_resp.json()
-                            return retry_res.get("data", [])
-            except aiohttp.ClientError as err:
-                _LOGGER.error("Network error fetching alarm list from %s: %s", target_url, err)
-                continue
+            for target_url in url_options:
+                try:
+                    async with self._session.post(target_url, data=data, headers=DEFAULT_HEADERS, timeout=15) as resp:
+                        result = await resp.json(content_type=None)
+                        code = str(result.get("code"))
+                        if code == "200":
+                            return result.get("data", [])
+                        elif code in ("10002", "10003"):
+                            token = await self.get_access_token(force_refresh=True)
+                            data["accessToken"] = token
+                            async with self._session.post(target_url, data=data, headers=DEFAULT_HEADERS, timeout=15) as retry_resp:
+                                retry_res = await retry_resp.json(content_type=None)
+                                return retry_res.get("data", [])
+                except (aiohttp.ClientError, asyncio.TimeoutError):
+                    continue
+
+        except Exception as err:
+            _LOGGER.debug("Error fetching alarm list: %s", err)
 
         return []
 
@@ -252,7 +254,6 @@ class EzvizAPIClient:
                 if resp.status == 200:
                     content = await resp.read()
 
-                    # 尝试自动解密！
                     candidate_codes = self.get_candidate_verification_codes(device_serial)
                     if candidate_codes:
                         content = decrypt_ezviz_image_bytes(content, candidate_codes)
@@ -262,10 +263,10 @@ class EzvizAPIClient:
                     _LOGGER.info("Saved alarm image to %s", target_path)
                     return target_path
                 else:
-                    _LOGGER.warning("Failed to download image from %s (HTTP %s)", pic_url, resp.status)
+                    _LOGGER.debug("Failed to download image from %s (HTTP %s)", pic_url, resp.status)
                     return None
         except Exception as err:
-            _LOGGER.error("Error downloading alarm image: %s", err)
+            _LOGGER.debug("Error downloading alarm image: %s", err)
             return None
 
     @staticmethod

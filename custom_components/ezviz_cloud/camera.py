@@ -75,7 +75,7 @@ class EzvizCloudCamera(CoordinatorEntity[EzvizDataUpdateCoordinator], Camera):
         pic_url = await self.coordinator.api.capture_snapshot(self._device_serial)
 
         if not pic_url:
-            _LOGGER.warning("Could not get snapshot URL for %s", self._device_serial)
+            _LOGGER.debug("Snapshot not available for %s, using cached image", self._device_serial)
             return self._last_image
 
         try:
@@ -84,6 +84,6 @@ class EzvizCloudCamera(CoordinatorEntity[EzvizDataUpdateCoordinator], Camera):
                     self._last_image = await resp.read()
                     return self._last_image
         except Exception as err:
-            _LOGGER.error("Error fetching camera image from %s: %s", pic_url, err)
+            _LOGGER.debug("Error fetching camera image from %s: %s", pic_url, err)
 
         return self._last_image
